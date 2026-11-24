@@ -32,3 +32,7 @@ Não some os percentuais. Eles se sobrepõem: depois que um item cortou as leitu
 - [ ] Fases intercaladas, rodada a rodada, e a mediana no lugar do total.
 - [ ] A tentativa que falhou entra na conta: o `compare` divide o custo de todas as tentativas pelas concluídas.
 - [ ] Olhe tarefa por tarefa: uma média boa esconde a tarefa que piorou.
+
+---
+
+*Claude Code enxuto*, edição 0.9. Texto sob [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.pt-br).

@@ -1,6 +1,6 @@
 # 1. Medir antes de mexer
 
-> Capítulo 1 de *Claude Code enxuto*, edição 0.9. A ferramenta deste capítulo está em [`measure/`](measure/), e os dados das medições, em [`dados/`](dados/). Sobre o livro: [README](README.md#o-livro).
+> Capítulo 1 de *Claude Code enxuto*, edição 0.9. A ferramenta deste capítulo está em [`measure/`](measure/), e os dados das medições, em [`dados/`](dados/). Sobre o livro: [README](README.md#o-livro). Texto sob [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.pt-br).
 
 Antes de medir, eu achava que o caro no Claude Code era a resposta: o modelo escrevendo código, explicando, pensando. A primeira medição desmentiu isso. Numa tarefa comum, a resposta era menos de um terço da conta. A maior parte ia para uma linha que eu nem sabia ler: gravação de cache de uma hora.
 
