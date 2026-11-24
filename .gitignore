@@ -1,0 +1,5 @@
+# Registros de medição carregam ids de sessão e nomes das suas tarefas.
+medicoes*.json
+measurements*.json
+__pycache__/
+.montado

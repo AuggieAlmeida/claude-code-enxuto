@@ -1,0 +1,64 @@
+{
+ "version": 1,
+ "attempts": [
+  {
+   "session": "r001",
+   "task": "retomar-ideia",
+   "phase": "antes",
+   "completed": true,
+   "note": "",
+   "since": null,
+   "until": "2026-11-24T06:08:23Z",
+   "measurement": {
+    "requests": 20,
+    "input": 40,
+    "cache_write_5m": 0,
+    "cache_write_1h": 88776,
+    "cache_read": 2319684,
+    "output": 22765,
+    "cost": 1.629605,
+    "cost_known": true,
+    "class_cost": {
+     "input": 0.00016,
+     "cache_write_1h": 0.710208,
+     "cache_read": 0.463937,
+     "output": 0.4553
+    },
+    "first_context": 92678,
+    "max_context": 137920,
+    "start": "2026-11-24T05:56:05.494000+00:00",
+    "end": "2026-11-24T06:02:34.546000+00:00"
+   }
+  },
+  {
+   "session": "r001",
+   "task": "promover-ideia",
+   "phase": "antes",
+   "completed": true,
+   "note": "",
+   "since": "2026-11-24T06:08:23Z",
+   "until": "2026-11-24T06:16:19Z",
+   "measurement": {
+    "requests": 21,
+    "input": 44,
+    "cache_write_5m": 87333,
+    "cache_write_1h": 89465,
+    "cache_read": 3212909,
+    "output": 26355,
+    "cost": 2.000308,
+    "cost_known": true,
+    "class_cost": {
+     "input": 0.000148,
+     "cache_write_1h": 0.71572,
+     "cache_read": 0.603048,
+     "output": 0.46306,
+     "cache_write_5m": 0.218333
+    },
+    "first_context": 141108,
+    "max_context": 228889,
+    "start": "2026-11-24T06:08:47.203000+00:00",
+    "end": "2026-11-24T06:15:09.143000+00:00"
+   }
+  }
+ ]
+}

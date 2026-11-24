@@ -1,0 +1,18 @@
+{
+  "_about": "USD per million tokens. Keys are the model id exactly as it appears in Claude Code transcripts (message.model). A model or token class without a price makes the cost come out as unknown, never estimated.",
+  "_source": "Anthropic first-party API rates as listed in the claude-api reference bundled with Claude Code (price table cached 2026-11-03). Check https://platform.claude.com/docs/en/about-claude/pricing before publishing any number.",
+  "_checked_on": "2026-11-24",
+  "_cache_write_multipliers": "When a model has no explicit cache_write_5m / cache_write_1h, the script derives them from input: 5-minute write = 1.25x input, 1-hour write = 2x input. Cache read differs by model and is never derived.",
+  "models": {
+    "claude-fable-5-2": {"input": 8.00, "output": 40.00, "cache_read": 0.20, "cache_write_5m": 10.00, "cache_write_1h": 16.00},
+    "claude-opus-5-5": {"input": 4.00, "output": 20.00, "cache_read": 0.20},
+    "claude-sonnet-5-5": {"input": 2.00, "output": 10.00, "cache_read": 0.10},
+    "claude-fable-5-1": {"input": 10.00, "output": 50.00, "cache_read": 0.25},
+    "claude-haiku-5-5": {
+      "input": 0.10,
+      "output": 0.50,
+      "long_context": {"above_prompt_tokens": 100000, "input": 0.50, "output": 2.50},
+      "_note": "cache read price not listed in the bundled reference; sessions with cache reads on this model report cost as unknown"
+    }
+  }
+}
