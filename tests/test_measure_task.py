@@ -178,5 +178,80 @@ class CompareCase(unittest.TestCase):
             self.assertIn("-75.0%", text)
 
 
+def tool_line(msg_id, req_id, ts, blocks):
+    usage = {"input_tokens": 1, "cache_read_input_tokens": 100, "output_tokens": 10}
+    return {"type": "assistant", "requestId": req_id, "timestamp": ts,
+            "message": {"id": msg_id, "model": "claude-opus-5-5", "usage": usage, "content": blocks}}
+
+
+def call(call_id, name, **args):
+    return {"type": "tool_use", "id": call_id, "name": name, "input": args}
+
+
+class ToolTrailCase(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        project = Path(self.tmp.name) / "projects" / "C--work-demo"
+        first = tool_line("m1", "r1", "2026-11-24T10:00:00Z",
+                          [{"type": "text", "text": "vou ler"}, call("t1", "Read", file_path="/p/schema.yaml")])
+        write_jsonl(project / f"{SESSION}.jsonl", [
+            first,
+            first,  # the same line twice: the call counts once
+            # the same answer goes on: another block of message m1 on its own line
+            tool_line("m1", "r1", "2026-11-24T10:00:00Z", [call("t2", "Grep", pattern="projeto")]),
+            tool_line("m2", "r2", "2026-11-24T10:01:00Z", [
+                call("t3", "Read", file_path="/p/notas.md", offset=10, limit=40),
+                call("t4", "Agent", subagent_type="Explore", prompt="leia"),
+                call("t5", "Bash", command="ls"),
+                call("t6", "WebFetch", url="https://example.com"),
+            ]),
+            tool_line("m3", "r3", "2026-11-24T10:10:00Z", [call("t9", "Read", file_path="/p/tarde.md")]),
+        ])
+        write_jsonl(project / SESSION / "subagents" / "agent-x.jsonl", [
+            tool_line("s1", "q1", "2026-11-24T10:02:00Z", [call("t7", "Read", file_path="/p/schema.yaml"),
+                                                           call("t8", "Glob", pattern="*.md")]),
+        ])
+        self.main_file = project / f"{SESSION}.jsonl"
+
+    def test_counts_kinds_per_side_once_each(self):
+        until = mt.parse_time("2026-11-24T10:05:00Z")
+        trail = mt.collect_tools(self.main_file, until=until)
+        main, sub = trail["main"], trail["subagents"]
+        self.assertEqual((main["read_full"], main["read_partial"], main["grep"]), (1, 1, 1))
+        self.assertEqual((main["subagent"], main["shell"], main["other"]), (1, 1, 1))
+        self.assertEqual(trail["other_names"], {"WebFetch": 1})
+        self.assertEqual((sub["read_full"], sub["glob"]), (1, 1))
+        self.assertEqual(trail["read_full_files"], {"/p/schema.yaml": 2})
+
+    def test_time_window_applies_to_tools(self):
+        trail = mt.collect_tools(self.main_file)
+        self.assertEqual(trail["main"]["read_full"], 2)
+        self.assertIn("/p/tarde.md", trail["read_full_files"])
+
+    def test_snapshot_keeps_counts_without_paths(self):
+        m = mt.measure(self.main_file, PRICES, until=mt.parse_time("2026-11-24T10:05:00Z"))
+        snap = mt.snapshot(m)
+        self.assertEqual(snap["tools"]["main"]["read_full"], 1)
+        self.assertEqual(snap["tools"]["subagents"]["glob"], 1)
+        self.assertNotIn("schema.yaml", json.dumps(snap))
+
+    def test_rendered_trail_and_phase_metric(self):
+        m = mt.measure(self.main_file, PRICES, until=mt.parse_time("2026-11-24T10:05:00Z"))
+        text = mt.render_measurement(m, mt.LABELS["pt"])
+        self.assertIn("Ferramentas na conversa principal: Read inteiro 1 · Read de trecho 1 · Grep 1", text)
+        self.assertIn("Ferramentas nos subagentes: Read inteiro 1 · Glob 1", text)
+        self.assertIn("Lidos inteiros: schema.yaml ×2", text)
+        attempt = {"task": "a", "completed": True, "measurement": mt.snapshot(m)}
+        self.assertEqual(mt.phase_summary([attempt, dict(attempt)])["read_full_per_task"], 2.0)
+
+    def test_old_records_without_trail_give_no_read_metric(self):
+        m = mt.measure(self.main_file, PRICES)
+        old = mt.snapshot(m)
+        old.pop("tools")
+        self.assertIsNone(mt.phase_summary([{"task": "a", "completed": True, "measurement": old}])
+                          ["read_full_per_task"])
+
+
 if __name__ == "__main__":
     unittest.main()

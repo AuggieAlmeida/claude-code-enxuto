@@ -14,7 +14,8 @@ phase's total cost by the number of tasks that got done.
 
 Commands:
     list      recent sessions of a project (default: current directory)
-    measure   one session, optionally limited to a time window
+    measure   one session, optionally limited to a time window, with its tool trail
+              (whole-file reads, partial reads, searches, subagent calls)
     record    store a session's measurement in a registry file
     compare   cost per completed task, phase against phase
 
@@ -54,6 +55,10 @@ LABELS = {
         "cost_split": "Custo por classe (só requisições com preço)",
         "first_context": "Contexto na primeira requisição",
         "attempt_cost": "Custo por tentativa (média ± desvio · mediana, mín–máx)",
+        "tools_main": "Ferramentas na conversa principal", "tools_sub": "Ferramentas nos subagentes",
+        "read_full": "Read inteiro", "read_partial": "Read de trecho", "grep": "Grep", "glob": "Glob",
+        "subagent": "Subagente", "shell": "Shell", "edit": "Edição", "other": "Outras",
+        "read_full_files": "Lidos inteiros", "read_full_per_task": "Leituras inteiras por tarefa concluída",
     },
     "en": {
         "session": "Session", "title": "Title", "start": "Start", "duration": "Duration",
@@ -71,6 +76,10 @@ LABELS = {
         "cost_split": "Cost by token class (priced requests only)",
         "first_context": "Context on the first request",
         "attempt_cost": "Cost per attempt (mean ± sd · median, min–max)",
+        "tools_main": "Tools in the main thread", "tools_sub": "Tools in subagents",
+        "read_full": "Whole-file Read", "read_partial": "Partial Read", "grep": "Grep", "glob": "Glob",
+        "subagent": "Subagent", "shell": "Shell", "edit": "Edit", "other": "Other",
+        "read_full_files": "Read whole", "read_full_per_task": "Whole-file reads per completed task",
     },
 }
 
@@ -130,6 +139,7 @@ class Measurement:
     max_context: int = 0
     mean_context: float = 0.0
     missing_prices: list[str] = field(default_factory=list)
+    tools: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         out = asdict(self)
@@ -327,6 +337,67 @@ def collect(main_file: Path, since: datetime | None = None, until: datetime | No
     return requests, title
 
 
+TOOL_KINDS = ("read_full", "read_partial", "grep", "glob", "subagent", "shell", "edit", "other")
+SUBAGENT_TOOLS = {"Agent", "Task"}
+SHELL_TOOLS = {"Bash", "PowerShell"}
+EDIT_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
+
+
+def classify_tool(name: str, args: dict) -> str:
+    """Kind of a tool call. A Read without offset, limit or pages reads the whole file."""
+    if name == "Read":
+        partial = any(args.get(k) not in (None, "") for k in ("offset", "limit", "pages"))
+        return "read_partial" if partial else "read_full"
+    if name in ("Grep", "Glob"):
+        return name.lower()
+    if name in SUBAGENT_TOOLS:
+        return "subagent"
+    if name in SHELL_TOOLS:
+        return "shell"
+    if name in EDIT_TOOLS:
+        return "edit"
+    return "other"
+
+
+def collect_tools(main_file: Path, since: datetime | None = None, until: datetime | None = None) -> dict:
+    """Tool calls of a session, main thread and subagents counted apart.
+
+    Claude Code writes each content block of an answer on its own line, repeating the
+    message id, so calls are deduplicated by their own id, not by the request.
+    """
+    trail = {"main": dict.fromkeys(TOOL_KINDS, 0), "subagents": dict.fromkeys(TOOL_KINDS, 0),
+             "other_names": {}, "read_full_files": {}}
+    seen: set[str] = set()
+    for thread, path in session_files(main_file):
+        side = "main" if thread == "main" else "subagents"
+        for entry in read_lines(path):
+            if entry.get("type") != "assistant":
+                continue
+            content = (entry.get("message") or {}).get("content")
+            if not isinstance(content, list):
+                continue
+            moment = parse_time(entry.get("timestamp", ""))
+            if moment is None or (since and moment < since) or (until and moment > until):
+                continue
+            for block in content:
+                if not isinstance(block, dict) or block.get("type") != "tool_use":
+                    continue
+                call_id = block.get("id") or f"{thread}:{json.dumps(block, sort_keys=True)}"
+                if call_id in seen:
+                    continue
+                seen.add(call_id)
+                name = block.get("name") or "?"
+                args = block.get("input") if isinstance(block.get("input"), dict) else {}
+                kind = classify_tool(name, args)
+                trail[side][kind] += 1
+                if kind == "other":
+                    trail["other_names"][name] = trail["other_names"].get(name, 0) + 1
+                if kind == "read_full" and args.get("file_path"):
+                    file_path = str(args["file_path"])
+                    trail["read_full_files"][file_path] = trail["read_full_files"].get(file_path, 0) + 1
+    return trail
+
+
 def measure(main_file: Path, prices: dict, since=None, until=None) -> Measurement:
     requests, title = collect(main_file, since, until, prices)
     total, main, subagents = Usage(), Usage(), Usage()
@@ -355,6 +426,7 @@ def measure(main_file: Path, prices: dict, since=None, until=None) -> Measuremen
         max_context=max(main_contexts, default=0),
         mean_context=sum(main_contexts) / len(main_contexts) if main_contexts else 0.0,
         missing_prices=sorted(missing),
+        tools=collect_tools(main_file, since, until),
     )
 
 
@@ -388,6 +460,8 @@ def snapshot(m: Measurement) -> dict:
         "max_context": m.max_context,
         "start": m.start,
         "end": m.end,
+        # counts only: file paths stay out of the registry
+        "tools": {side: dict(m.tools.get(side, {})) for side in ("main", "subagents")},
     }
 
 
@@ -409,6 +483,9 @@ def phase_summary(attempts: list[dict]) -> dict:
             cost=s["cost"], cost_known=s["cost_known"],
         ))
     n = completed_attempts
+    trails = [a["measurement"].get("tools") for a in attempts]
+    read_full = (sum(t.get(side, {}).get("read_full", 0) for t in trails for side in ("main", "subagents"))
+                 if trails and all(trails) else None)
     contexts = [a["measurement"]["max_context"] for a in attempts]
     costs = sorted(a["measurement"]["cost"] for a in attempts)
     spread = None
@@ -432,6 +509,7 @@ def phase_summary(attempts: list[dict]) -> dict:
         "requests_per_task": total.requests / n if n else None,
         "cache_hit": total.cache_hit,
         "mean_max_context": sum(contexts) / len(contexts) if contexts else None,
+        "read_full_per_task": read_full / n if n and read_full is not None else None,
     }
 
 
@@ -447,7 +525,7 @@ def compare(registry: dict, before: str | None, after: str | None) -> dict:
     if before in phases and after in phases:
         b, a = result["phases"][before], result["phases"][after]
         for metric in ("cost_per_task", "prompt_per_task", "output_per_task", "requests_per_task",
-                       "cache_hit", "mean_max_context"):
+                       "cache_hit", "mean_max_context", "read_full_per_task"):
             if b[metric] and a[metric] is not None:
                 result["change"][metric] = (a[metric] - b[metric]) / b[metric]
         result["only_in"] = {
@@ -515,7 +593,29 @@ def render_measurement(m: Measurement, L: dict) -> str:
     ]
     if m.missing_prices:
         parts.append(f"- {L['missing_prices']}: {', '.join(m.missing_prices)}")
+    parts += render_tools(m.tools, L)
     return "\n".join(parts)
+
+
+def render_tools(trail: dict, L: dict) -> list[str]:
+    if not trail:
+        return []
+
+    def counts(side: str) -> str:
+        items = [f"{L[k]} {v}" for k, v in trail.get(side, {}).items() if v]
+        return " · ".join(items) or "—"
+
+    lines = [f"- {L['tools_main']}: {counts('main')}"]
+    if any(trail.get("subagents", {}).values()):
+        lines.append(f"- {L['tools_sub']}: {counts('subagents')}")
+    if trail.get("other_names"):
+        lines.append(f"- {L['other']}: " + ", ".join(f"{k} {v}" for k, v in sorted(trail["other_names"].items())))
+    files = sorted(trail.get("read_full_files", {}).items(), key=lambda kv: (-kv[1], kv[0]))
+    if files:
+        shown = ", ".join(f"{Path(f).name} ×{n}" for f, n in files[:5])
+        more = f" (+{len(files) - 5})" if len(files) > 5 else ""
+        lines.append(f"- {L['read_full_files']}: {shown}{more}")
+    return lines
 
 
 def render_comparison(result: dict, L: dict) -> str:
@@ -525,6 +625,7 @@ def render_comparison(result: dict, L: dict) -> str:
         ("cost_per_task", lambda v: "—" if v is None else f"{v:.4f}"),
         ("prompt_per_task", fmt_int), ("output_per_task", fmt_int), ("requests_per_task", fmt_int),
         ("cache_hit", fmt_pct), ("mean_max_context", fmt_int),
+        ("read_full_per_task", lambda v: "—" if v is None else f"{v:.1f}"),
     ]
     show_change = bool(result["change"])
     headers = ["", *names] + ([L["change"]] if show_change else [])

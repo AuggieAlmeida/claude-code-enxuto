@@ -33,7 +33,7 @@ O `list` mostra as sessões recentes, com custo e título. O `measure` junta a c
 
 | Arquivo | O quê |
 |---|---|
-| [`measure/measure_task.py`](measure/measure_task.py) | `list`, `measure`, `record` e `compare`; saída em inglês com `--lang en` |
+| [`measure/measure_task.py`](measure/measure_task.py) | `list`, `measure`, `record` e `compare`, com a trilha de ferramentas de cada sessão (leituras inteiras e de trecho, buscas, subagentes); saída em inglês com `--lang en` |
 | [`measure/prices.json`](measure/prices.json) | preços da API por classe de token, com a data em que foram conferidos; modelo sem preço sai como desconhecido, nunca estimado |
 | [`capitulo-1.md`](capitulo-1.md) | Medir antes de mexer: a ferramenta, as cinco classes de token e a linha de base |
 | [`checklist.md`](checklist.md) | as mudanças do livro numa página, cada uma com o número medido e onde ela não vale |
