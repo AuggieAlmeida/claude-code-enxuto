@@ -37,7 +37,7 @@ O `list` mostra as sessões recentes, com custo e título. O `measure` junta a c
 | [`measure/prices.json`](measure/prices.json) | preços da API por classe de token, com a data em que foram conferidos; modelo sem preço sai como desconhecido, nunca estimado |
 | [`capitulo-1.md`](capitulo-1.md) | Medir antes de mexer: a ferramenta, as cinco classes de token e a linha de base |
 | [`checklist.md`](checklist.md) | as mudanças do livro numa página, cada uma com o número medido e onde ela não vale |
-| [`dados/`](dados/) | as 112 tentativas medidas para o livro, sem nada pessoal, em JSON e CSV; o `compare` lê o JSON direto |
+| [`dados/`](dados/) | as 231 tentativas medidas para o livro, em dois blocos de benchmark, sem nada pessoal, em JSON e CSV; o `compare` lê o JSON direto |
 | [`tests/`](tests/) | `python -m unittest discover -s tests` |
 
 ## Cuidados
@@ -48,7 +48,7 @@ O `list` mostra as sessões recentes, com custo e título. O `measure` junta a c
 
 ## O livro
 
-*Claude Code enxuto* mede cada mudança que promete gastar menos com o Claude Code: execuções repetidas e intercaladas, mediana, uma mudança por vez e a tentativa que falhou contada na conta. Mostra também o que rendeu menos que a fama e o que deixou a conta mais cara. São doze capítulos, da abertura que o modelo lê antes do seu pedido até a escolha entre continuar a sessão ou abrir outra. Edição 0.9, datada: cada edição traz a data e as versões medidas, e os benchmarks rodam de novo quando sai uma versão que mexe nisso.
+*Claude Code enxuto* mede cada mudança que promete gastar menos com o Claude Code: execuções repetidas e intercaladas, mediana, uma mudança por vez e a tentativa que falhou contada na conta. Mostra também o que rendeu menos que a fama e o que deixou a conta mais cara. São doze capítulos, da abertura que o modelo lê antes do seu pedido até a escolha entre continuar a sessão ou abrir outra. Edição 1.0, datada: cada edição traz a data e as versões medidas, e os benchmarks rodam de novo quando sai uma versão que mexe nisso.
 
 O livro completo sai em 2027. Para ser avisado, use **Watch → Custom → Releases** neste repositório: cada edição nova vira uma release.
 
@@ -75,6 +75,6 @@ The unit that matters is cost per *completed* task: record every attempt with `r
 
 The chart above: in two real tasks in the desktop app (Opus 5.5, 24/11/2026, API-equivalent cost), output was less than a third of the bill; the largest class was the 1-hour cache write.
 
-[`dados/`](dados/) holds the raw data behind the book, 112 measured attempts with nothing personal, as JSON (readable by `compare`) and CSV with English column names. The book and chapter 1 are in Portuguese first; the English edition comes next.
+[`dados/`](dados/) holds the raw data behind the book, 231 measured attempts in two benchmark blocks with nothing personal, as JSON (readable by `compare`) and CSV with English column names. The book and chapter 1 are in Portuguese first; the English edition comes next.
 
 License: code MIT; data CC BY 4.0; chapter 1, checklist and images CC BY-NC-ND 4.0.

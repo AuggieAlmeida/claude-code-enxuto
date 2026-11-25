@@ -165,6 +165,32 @@ class CompareCase(unittest.TestCase):
         result = mt.compare(registry, "before", "after")
         self.assertEqual(result["only_in"], {"before": ["A"], "after": ["B"]})
 
+    def test_phases_joined_by_comma_are_compared_together(self):
+        registry = {"attempts": [
+            self.attempt("A", "before-b1", True, 1.0), self.attempt("A", "before-b2", True, 3.0),
+            self.attempt("A", "after-b1", True, 0.5), self.attempt("A", "after-b2", False, 0.5),
+            self.attempt("A", "after-b2", True, 0.5),
+        ]}
+        result = mt.compare(registry, "before-b1,before-b2", "after-b1,after-b2")
+        self.assertAlmostEqual(result["phases"]["before-b1,before-b2"]["cost_per_task"], 2.0)
+        self.assertAlmostEqual(result["phases"]["after-b1,after-b2"]["cost_per_task"], 0.75)
+        self.assertAlmostEqual(result["change"]["cost_per_task"], -0.625)
+        self.assertEqual(result["phases"]["after-b1,after-b2"]["attempts"], 3)
+
+    def test_unknown_phase_in_a_join_gives_no_change(self):
+        registry = {"attempts": [self.attempt("A", "before", True, 1.0), self.attempt("A", "after", True, 0.5)]}
+        result = mt.compare(registry, "before,missing", "after")
+        self.assertEqual(result["change"], {})
+        self.assertNotIn("before,missing", result["phases"])
+
+    def test_explicit_phases_show_only_their_two_columns(self):
+        registry = {"attempts": [self.attempt("A", p, True, 1.0) for p in ("warm", "before", "after", "other")]}
+        text = mt.render_comparison(mt.compare(registry, "before", "after"), mt.LABELS["en"])
+        header = text.splitlines()[0]
+        self.assertIn("before", header)
+        self.assertNotIn("warm", header)
+        self.assertNotIn("other", header)
+
     def test_record_then_compare_cli(self):
         with tempfile.TemporaryDirectory() as tmp:
             registry = Path(tmp) / "m.json"

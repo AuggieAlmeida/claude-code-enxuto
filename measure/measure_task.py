@@ -514,14 +514,21 @@ def phase_summary(attempts: list[dict]) -> dict:
 
 
 def compare(registry: dict, before: str | None, after: str | None) -> dict:
+    """Phase against phase. `before` and `after` may each join several phases with commas
+    ("base-a,base-b"), so rounds run on different days or blocks are compared together."""
     phases: dict[str, list[dict]] = {}
     for a in registry.get("attempts", []):
         phases.setdefault(a["phase"], []).append(a)
     order = list(phases)
+    explicit = bool(before and after)
     before = before or (order[0] if order else None)
     after = after or (order[1] if len(order) > 1 else None)
+    for name in (before, after):
+        parts = [p.strip() for p in name.split(",")] if name and "," in name else []
+        if parts and all(p in phases for p in parts):
+            phases[name] = [a for p in parts for a in phases[p]]
     result = {"phases": {name: phase_summary(items) for name, items in phases.items()},
-              "before": before, "after": after, "change": {}, "only_in": {}}
+              "before": before, "after": after, "explicit": explicit, "change": {}, "only_in": {}}
     if before in phases and after in phases:
         b, a = result["phases"][before], result["phases"][after]
         for metric in ("cost_per_task", "prompt_per_task", "output_per_task", "requests_per_task",
@@ -619,7 +626,11 @@ def render_tools(trail: dict, L: dict) -> list[str]:
 
 
 def render_comparison(result: dict, L: dict) -> str:
-    names = list(result["phases"])
+    # with --before and --after, only those two columns; otherwise every phase in the registry
+    if result.get("explicit") and all(n in result["phases"] for n in (result["before"], result["after"])):
+        names = [result["before"], result["after"]]
+    else:
+        names = [n for n in result["phases"] if "," not in n]
     metrics = [
         ("attempts", fmt_int), ("tasks", lambda v: str(len(v))), ("completed", fmt_int),
         ("cost_per_task", lambda v: "—" if v is None else f"{v:.4f}"),

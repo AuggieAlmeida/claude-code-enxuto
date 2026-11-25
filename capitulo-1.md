@@ -1,6 +1,11 @@
 # 1. Medir antes de mexer
 
-> Capítulo 1 de *Claude Code enxuto*, edição 0.9. A ferramenta deste capítulo está em [`measure/`](measure/), e os dados das medições, em [`dados/`](dados/). Sobre o livro: [README](README.md#o-livro). Texto sob [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.pt-br).
+> Capítulo 1 de *Claude Code enxuto*, edição 1.0. A ferramenta deste capítulo está em [`measure/`](measure/), e os dados das medições, em [`dados/`](dados/). Sobre o livro: [README](README.md#o-livro). Texto sob [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.pt-br).
+
+> **Neste capítulo**
+> - Onde o Claude Code anota os tokens de cada requisição, separados por classe.
+> - Como medir uma sessão com `measure_task.py` e ler o custo de cada classe de token.
+> - Como registrar tentativas, inclusive as que falharam, e montar a sua linha de base por tarefa concluída.
 
 Antes de medir, eu achava que o caro no Claude Code era a resposta: o modelo escrevendo código, explicando, pensando. A primeira medição desmentiu isso. Numa tarefa comum, a resposta era menos de um terço da conta. A maior parte ia para uma linha que eu nem sabia ler: gravação de cache de uma hora.
 
@@ -54,6 +59,12 @@ python measure/measure_task.py measure e0bdeada --until 2026-11-24T03:08
 
 A saída sai em português; `--lang en` troca para inglês.
 
+> **Aposte antes de ler**
+> Quanto contexto a primeira requisição leva ao modelo, antes de qualquer trabalho?
+> - pouco mais que o seu pedido
+> - alguns milhares de tokens
+> - dezenas de milhares de tokens
+
 ## Lendo o resultado
 
 Esta foi a primeira tarefa que eu medi: retomar uma ideia antiga na minha vault de notas, ler o que existia e escrever uma proposta. Seis minutos, Opus 5.5, no app desktop do Claude Code.
@@ -65,6 +76,9 @@ Esta foi a primeira tarefa que eu medi: retomar uma ideia antiga na minha vault 
 - Custo por classe: entrada 0% · gravação de 5 min 0% · gravação de 1 h 43,6% · leitura de cache 28,5% · saída 27,9%
 - Leitura de cache: 96,3%
 - Contexto na primeira requisição: 92.678 · maior contexto: 137.920 · contexto médio: 120.425
+
+> **43,6%**
+> do custo foi gravação de cache de 1 hora, a maior classe, numa tarefa de seis minutos no Opus 5.5
 
 Vale fazer a conta à mão uma vez, para confiar na ferramenta:
 
@@ -105,6 +119,9 @@ python measure/measure_task.py compare --registry medicoes.json
 
 Com duas tarefas medidas, a minha linha de base ficou em **US$ 1,81 por tarefa concluída**, com 20 requisições por tarefa e 95% da entrada lida do cache.
 
+> **US$ 1,81**
+> por tarefa concluída na minha linha de base, em equivalente de API: duas tarefas no Opus 5.5, app desktop
+
 A segunda tarefa trouxe outro achado. Eu a fiz na mesma sessão, logo depois da primeira, e ela já começou com 141 mil tokens de contexto, herdando tudo da anterior. A conclusão óbvia seria "abra uma sessão nova entre tarefas". O capítulo 9 mede isso, e a resposta não é a óbvia.
 
 ## Cuidados com os números
@@ -118,6 +135,11 @@ A segunda tarefa trouxe outro achado. Eu a fiz na mesma sessão, logo depois da 
 **A mesma tarefa repetida fica mais barata.** Dentro de uma hora, uma abertura idêntica já está no cache. No meu teste, a mesma tarefa caiu de US$ 0,26 para US$ 0,05 em quatro repetições. Se você medir o "antes" com cache frio e o "depois" com cache quente, vai encontrar uma economia que não existe. O capítulo 4 explica o mecanismo e o capítulo 10, como fugir dele.
 
 **Uma sessão, várias tarefas.** Recorte com `--since` e `--until`; senão, o registro mistura tarefas diferentes.
+
+> **Para levar**
+> - Meça antes de mudar: rode `measure` nas últimas sessões e ache a classe que mais pesa.
+> - Registre também as tentativas que falharam; elas entram no custo por tarefa concluída.
+> - Compare antes e depois com o cache no mesmo estado, ou a economia aparece sem existir.
 
 ## Exercício
 

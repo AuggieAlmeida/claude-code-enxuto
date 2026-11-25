@@ -1,18 +1,19 @@
 # Dados brutos das medições
 
-Todas as tentativas medidas para a edição de 24/11/2026 do livro *Claude Code enxuto*, inclusive as rodadas de aquecimento. Nada foi filtrado além do que era pessoal (ver [O que foi tirado](#o-que-foi-tirado)).
+Todas as tentativas medidas para o livro *Claude Code enxuto* (edição 1.0, medições de 24/11/2026), inclusive as rodadas de aquecimento. Nada foi filtrado além do que era pessoal (ver [O que foi tirado](#o-que-foi-tirado)).
 
 *English summary at the [end](#english).*
 
 | Arquivo | O quê |
 |---|---|
-| `bench-2026-11-24.json` | 110 tentativas de benchmark por `claude -p`, no formato de registro do `measure_task.py` |
+| `bench-2026-11-24.json` | 229 tentativas de benchmark por `claude -p`, em dois blocos (110 no primeiro, 119 no segundo), no formato de registro do `measure_task.py` |
 | `sessoes-reais-2026-11-24.json` | as 2 tarefas reais da linha de base do capítulo 1, no app desktop |
-| `tentativas-2026-11-24.csv` | as 112 tentativas numa tabela só, com a coluna `set` dizendo de qual arquivo veio cada uma |
+| `tentativas-2026-11-24.csv` | as 231 tentativas numa tabela só, com a coluna `set` dizendo de qual arquivo veio cada uma |
 
 ## Ambiente
 
 - **Data:** 24/11/2026.
+- **Blocos:** o benchmark inteiro rodou duas vezes nesse dia, cada vez com o cache frio: o primeiro bloco de dia, com a base de notas sendo editada, e o segundo à noite, com ela parada, na mesma ordem e com as mesmas flags. As fases do segundo bloco terminam em `-b2`, e a base dele se chama `base-b2`.
 - **Claude Code:** CLI 2.1.318 nos benchmarks; app desktop 2.1.330 nas sessões reais.
 - **Modelos:** Opus 5.5 e Sonnet 5.5, esforço médio nos benchmarks.
 - **Preços:** tabela da API de 03/11/2026, a mesma de [`measure/prices.json`](../measure/prices.json). O campo `cost` é o equivalente de API calculado por requisição; `cli_cost` é o custo que o próprio `claude -p` informou ao terminar.
@@ -34,23 +35,23 @@ Todas só de leitura, com resposta conferível.
 
 ## Fases
 
-Cada fase muda uma coisa. As de aquecimento rodaram antes da comparação, para o cache não favorecer nenhum lado, e ficam fora da conta.
+Cada fase muda uma coisa e existe nos dois blocos. As de aquecimento rodaram antes da comparação, para o cache não favorecer nenhum lado, e ficam fora da conta. A coluna de tentativas dá o primeiro bloco mais o segundo.
 
 | Fase | O que muda | Tentativas | Capítulo |
 |---|---|---:|---|
-| `base-2026-11-24` | configuração padrão do `claude -p`, Opus | 12 | 4 e 5 |
-| `worker-enxuto` | `--setting-sources project,local --strict-mcp-config --disable-slash-commands --tools Read,Grep,Glob`, Opus | 12 | 5 |
-| `worker-sem-hooks` | o mesmo, com `--setting-sources local`; uma rodada só | 3 | 5 e 11 |
-| `aquecimento-sonnet` | aquecimento do Sonnet no worker enxuto | 3 | 6 |
-| `cmp-opus`, `cmp-sonnet` | worker enxuto, Opus contra Sonnet | 9 + 9 | 6 |
-| `aquecimento-leitura` | aquecimento da leitura dirigida, nos dois modelos | 6 | 7 |
-| `leitura-opus`, `leitura-sonnet` | worker enxuto com a instrução de leitura dirigida | 9 + 9 | 7 |
-| `aquecimento-sub-a`, `aquecimento-sub-b` | aquecimento das duas variantes do subagente | 1 + 1 | 8 |
-| `sub-principal` | a conversa principal lê o schema inteiro | 6 | 8 |
-| `sub-subagente` | um subagente Explore no Sonnet lê o schema e devolve só os campos; `--tools` inclui `Agent` | 6 | 8 |
-| `aquecimento-sessao-mesma`, `aquecimento-sessao-nova` | aquecimento das duas variantes de sessão | 3 + 3 | 9 |
-| `sessao-mesma` | três tarefas em sequência na mesma sessão, por `--resume` | 9 | 9 |
-| `sessao-nova` | as mesmas três tarefas, cada uma numa sessão nova | 9 | 9 |
+| `base-2026-11-24`, `base-b2` | configuração padrão do `claude -p`, Opus | 12 + 12 | 4 e 5 |
+| `worker-enxuto` | `--setting-sources project,local --strict-mcp-config --disable-slash-commands --tools Read,Grep,Glob`, Opus | 12 + 12 | 5 |
+| `worker-sem-hooks` | o mesmo, com `--setting-sources local`; uma rodada no primeiro bloco, quatro no segundo | 3 + 12 | 5 e 11 |
+| `aquecimento-sonnet` | aquecimento do Sonnet no worker enxuto | 3 + 3 | 6 |
+| `cmp-opus`, `cmp-sonnet` | worker enxuto, Opus contra Sonnet | (9 + 9) + (9 + 9) | 6 |
+| `aquecimento-leitura` | aquecimento da leitura dirigida, nos dois modelos | 6 + 6 | 7 |
+| `leitura-opus`, `leitura-sonnet` | worker enxuto com a instrução de leitura dirigida | (9 + 9) + (9 + 9) | 7 |
+| `aquecimento-sub-a`, `aquecimento-sub-b` | aquecimento das duas variantes do subagente | (1 + 1) + (1 + 1) | 8 |
+| `sub-principal` | a conversa principal lê o schema inteiro | 6 + 6 | 8 |
+| `sub-subagente` | um subagente Explore no Sonnet lê o schema e devolve só os campos; `--tools` inclui `Agent` | 6 + 6 | 8 |
+| `aquecimento-sessao-mesma`, `aquecimento-sessao-nova` | aquecimento das duas variantes de sessão | (3 + 3) + (3 + 3) | 9 |
+| `sessao-mesma` | três tarefas em sequência na mesma sessão, por `--resume` | 9 + 9 | 9 |
+| `sessao-nova` | as mesmas três tarefas, cada uma numa sessão nova | 9 + 9 | 9 |
 | `antes` | as duas sessões reais da linha de base | 2 | 1 |
 
 ## Campos
@@ -67,14 +68,14 @@ O CSV tem as mesmas colunas, achatadas, com nomes em inglês.
 
 ## Reproduzir um número do livro
 
-O `compare` lê o JSON direto. O worker enxuto do capítulo 5:
+O `compare` lê o JSON direto e junta fases separadas por vírgula. O worker enxuto do capítulo 5, nos dois blocos:
 
 ```bash
 python measure/measure_task.py compare --registry dados/bench-2026-11-24.json \
-  --before base-2026-11-24 --after worker-enxuto
+  --before base-2026-11-24,base-b2 --after worker-enxuto,worker-enxuto-b2
 ```
 
-O custo por tarefa concluída vai de US$ 0,182 para 0,115 (−37%), e a mediana por tentativa, de 0,223 para 0,104 (−53%). Passe sempre `--before` e `--after`: sem eles, o `compare` pega as duas primeiras fases do arquivo.
+O custo por tarefa concluída vai de US$ 0,160 para 0,113 (−29%), e a mediana por tentativa fica empatada (0,106 e 0,104). Só o primeiro bloco (`--before base-2026-11-24 --after worker-enxuto`) dá −37% e −53%, os números da edição 0.9; o capítulo 10 do livro explica a diferença. Passe sempre `--before` e `--after`: sem eles, o `compare` pega as duas primeiras fases do arquivo.
 
 ## O que foi tirado
 
@@ -87,10 +88,10 @@ Nenhum número foi mexido: o script que gera esta pasta confere, fase a fase, qu
 
 ## Limites
 
-São medições de um dia, numa base só, com tarefas só de leitura e resposta conferível por regex. Nem todas as fases foram intercaladas entre si: o controle da leitura dirigida, por exemplo, são as fases `cmp-opus` e `cmp-sonnet`, rodadas antes dela. Cada capítulo diz o que foi intercalado com o quê. Uma versão nova do Claude Code ou uma tabela de preços nova muda os números; o método do capítulo 10 continua valendo.
+São medições de um dia, numa base só, com tarefas só de leitura e resposta conferível por regex. Nem todas as fases foram intercaladas entre si: no primeiro bloco, o controle da leitura dirigida são as fases `cmp-opus` e `cmp-sonnet`, rodadas antes dela; no segundo, as quatro se alternaram rodada a rodada. Cada capítulo diz o que foi intercalado com o quê. Uma versão nova do Claude Code ou uma tabela de preços nova muda os números; o método do capítulo 10 continua valendo.
 
 Licença: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.pt-br).
 
 ## English
 
-Raw data behind the 24/11/2026 edition of *Claude Code enxuto*: 110 benchmark attempts run with `claude -p` (CLI 2.1.318) and the 2 real desktop-app sessions (2.1.330) from chapter 1, Opus 5.5 and Sonnet 5.5 at medium effort, API-equivalent cost with the 03/11/2026 price table. The JSON files use the `measure_task.py` registry format, so `compare --registry dados/bench-2026-11-24.json --before base-2026-11-24 --after worker-enxuto` reproduces the chapter 5 result (cost per completed task −37%, median per attempt −53%). The CSV has the same fields with English column names. Session ids are anonymous; prompts, answers and notes were removed because they quote a personal notes vault; no number was changed. License: CC BY 4.0.
+Raw data behind *Claude Code enxuto*, edition 1.0, measured on 24/11/2026: 229 benchmark attempts run with `claude -p` (CLI 2.1.318) in two blocks on the same day (second-block phases end in `-b2`) and the 2 real desktop-app sessions (2.1.330) from chapter 1, Opus 5.5 and Sonnet 5.5 at medium effort, API-equivalent cost with the 03/11/2026 price table. The JSON files use the `measure_task.py` registry format, so `compare --registry dados/bench-2026-11-24.json --before base-2026-11-24,base-b2 --after worker-enxuto,worker-enxuto-b2` reproduces the chapter 5 result (cost per completed task −29%, median per attempt tied); the first block alone gives the 0.9 edition's −37% and −53%. The CSV has the same fields with English column names. Session ids are anonymous; prompts, answers and notes were removed because they quote a personal notes vault; no number was changed. License: CC BY 4.0.
