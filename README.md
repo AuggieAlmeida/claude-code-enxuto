@@ -50,7 +50,7 @@ O `list` mostra as sessões recentes, com custo e título. O `measure` junta a c
 
 *Claude Code enxuto* mede cada mudança que promete gastar menos com o Claude Code: execuções repetidas e intercaladas, mediana, uma mudança por vez e a tentativa que falhou contada na conta. Mostra também o que rendeu menos que a fama e o que deixou a conta mais cara. São doze capítulos, da abertura que o modelo lê antes do seu pedido até a escolha entre continuar a sessão ou abrir outra. Edição 1.0, datada: cada edição traz a data e as versões medidas, e os benchmarks rodam de novo quando sai uma versão que mexe nisso.
 
-O livro completo sai em 2027. Para ser avisado, use **Watch → Custom → Releases** neste repositório: cada edição nova vira uma release.
+O livro em PDF está à venda em https://pay.kiwify.com.br/x5ycqgy. No checkout dá para juntar o kit, com as outras ferramentas que o livro usa.
 
 ## Licença
 
