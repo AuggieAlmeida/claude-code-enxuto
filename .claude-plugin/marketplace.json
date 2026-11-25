@@ -1,0 +1,16 @@
+{
+  "name": "augusto-almeida",
+  "description": "Ferramentas de medição de custo do Claude Code enxuto. Cost measurement tools from Claude Code enxuto.",
+  "owner": {
+    "name": "Augusto Almeida",
+    "url": "https://github.com/AuggieAlmeida"
+  },
+  "plugins": [
+    {
+      "name": "enxuto",
+      "source": "./",
+      "category": "productivity",
+      "tags": ["custo", "tokens", "cost", "usage"]
+    }
+  ]
+}

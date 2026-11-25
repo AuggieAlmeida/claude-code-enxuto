@@ -1,0 +1,14 @@
+{
+  "name": "enxuto",
+  "displayName": "Claude Code enxuto",
+  "version": "1.0.0",
+  "description": "Mede quanto custou a sessão e para onde foi o dinheiro, por classe de token, lendo só os transcripts locais. Measures what a session cost and where the money went, per token class, from local transcripts only.",
+  "author": {
+    "name": "Augusto Almeida",
+    "url": "https://github.com/AuggieAlmeida"
+  },
+  "homepage": "https://github.com/AuggieAlmeida/claude-code-enxuto",
+  "repository": "https://github.com/AuggieAlmeida/claude-code-enxuto",
+  "license": "MIT",
+  "keywords": ["custo", "tokens", "cache", "medição", "cost", "usage", "measurement"]
+}

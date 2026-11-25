@@ -29,12 +29,22 @@ python measure/measure_task.py measure <começo do id da sessão>
 
 O `list` mostra as sessões recentes, com custo e título. O `measure` junta a conversa principal e os subagentes, conta cada requisição uma vez e separa o custo nas cinco classes de token, além de mostrar o contexto da primeira requisição. Para comparar uma configuração com outra, registre cada tentativa com `record`, inclusive as que falharam, e rode o `compare`. O [capítulo 1](capitulo-1.md) explica cada coluna e a unidade que importa: o custo por tarefa concluída.
 
+## Ou de dentro do Claude Code, como plugin
+
+```bash
+claude plugin marketplace add AuggieAlmeida/claude-code-enxuto
+claude plugin install enxuto@augusto-almeida
+```
+
+Numa sessão, `/enxuto:custo` mede a própria sessão até ali, `/enxuto:custo lista` mostra as recentes de todos os projetos e `/enxuto:custo <id>` mede outra. O plugin roda a mesma ferramenta (Python 3.9 ou mais novo), pede a sua permissão antes de rodar o comando e também só lê arquivos locais.
+
 ## O que tem aqui
 
 | Arquivo | O quê |
 |---|---|
 | [`measure/measure_task.py`](measure/measure_task.py) | `list`, `measure`, `record` e `compare`, com a trilha de ferramentas de cada sessão (leituras inteiras e de trecho, buscas, subagentes); saída em inglês com `--lang en` |
 | [`measure/prices.json`](measure/prices.json) | preços da API por classe de token, com a data em que foram conferidos; modelo sem preço sai como desconhecido, nunca estimado |
+| [`skills/custo/`](skills/custo/SKILL.md) e [`.claude-plugin/`](.claude-plugin/) | o plugin do Claude Code: a skill `/enxuto:custo` e o marketplace que instala o plugin |
 | [`capitulo-1.md`](capitulo-1.md) | Medir antes de mexer: a ferramenta, as cinco classes de token e a linha de base |
 | [`checklist.md`](checklist.md) | as mudanças do livro numa página, cada uma com o número medido e onde ela não vale |
 | [`dados/`](dados/) | as 231 tentativas medidas para o livro, em dois blocos de benchmark, sem nada pessoal, em JSON e CSV; o `compare` lê o JSON direto |
@@ -54,7 +64,7 @@ O livro em PDF está à venda em https://pay.kiwify.com.br/x5ycqgy. No checkout 
 
 ## Licença
 
-- **Código** (`measure/`, `tests/`): MIT, no arquivo [LICENSE](LICENSE).
+- **Código** (`measure/`, `tests/`, `skills/`, `.claude-plugin/`): MIT, no arquivo [LICENSE](LICENSE).
 - **Dados** (`dados/`): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.pt-br). Use e cite.
 - **Capítulo 1, checklist e imagens:** [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.pt-br). Leia e compartilhe com crédito, sem uso comercial e sem versão modificada.
 
@@ -71,10 +81,12 @@ python measure/measure_task.py --lang en list --all
 python measure/measure_task.py --lang en measure <session id prefix>
 ```
 
+Or as a Claude Code plugin: `claude plugin marketplace add AuggieAlmeida/claude-code-enxuto`, then `claude plugin install enxuto@augusto-almeida`. In a session, `/enxuto:custo` measures that session so far, `/enxuto:custo list` shows recent sessions and `/enxuto:custo <id>` measures another one (Python 3.9+, local files only, asks before running).
+
 The unit that matters is cost per *completed* task: record every attempt with `record`, failed ones included, and `compare` divides the phase's total cost by the attempts that got done.
 
 The chart above: in two real tasks in the desktop app (Opus 5.5, 24/11/2026, API-equivalent cost), output was less than a third of the bill; the largest class was the 1-hour cache write.
 
 [`dados/`](dados/) holds the raw data behind the book, 231 measured attempts in two benchmark blocks with nothing personal, as JSON (readable by `compare`) and CSV with English column names. The book and chapter 1 are in Portuguese first; the English edition comes next.
 
-License: code MIT; data CC BY 4.0; chapter 1, checklist and images CC BY-NC-ND 4.0.
+License: code (including the plugin) MIT; data CC BY 4.0; chapter 1, checklist and images CC BY-NC-ND 4.0.
